@@ -48,6 +48,14 @@ class BaseRepository(ABC):
         pass
 
     @abstractmethod
+    def get_requests_for_session(self, session_id: str) -> List[Dict[str, Any]]:
+        pass
+
+    @abstractmethod
+    def get_recent_requests(self, limit: int = 20) -> List[Dict[str, Any]]:
+        pass
+
+    @abstractmethod
     def record_event(self, request_id: str, batch_id: str, session_id: str, from_state: str, to_state: str, reason: str = "", payload: Optional[Dict[str, Any]] = None) -> None:
         pass
 
@@ -309,6 +317,20 @@ class SqliteRepo(BaseRepository):
             rows = cursor.fetchall()
             return [dict(r) for r in rows]
 
+    def get_requests_for_session(self, session_id: str) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM requests WHERE session_id = ? ORDER BY sent_at ASC", (session_id,))
+            rows = cursor.fetchall()
+            return [dict(r) for r in rows]
+
+    def get_recent_requests(self, limit: int = 20) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM requests ORDER BY updated_at DESC LIMIT ?", (limit,))
+            rows = cursor.fetchall()
+            return [dict(r) for r in rows]
+
     def record_event(self, request_id: str, batch_id: str, session_id: str, from_state: str, to_state: str, reason: str = "", payload: Optional[Dict[str, Any]] = None) -> None:
         ts = now_iso()
         with self._get_conn() as conn:
@@ -473,6 +495,13 @@ class CtxStorageRepo(BaseRepository):
     def get_all_open_requests(self) -> List[Dict[str, Any]]:
         terminal = ("RESOLVED", "PARTIAL", "REFUSED", "SEND_FAILED")
         return [v for k, v in self._store.items() if k.startswith("req:") and v.get("state") not in terminal]
+
+    def get_requests_for_session(self, session_id: str) -> List[Dict[str, Any]]:
+        return [v for k, v in self._store.items() if k.startswith("req:") and v.get("session_id") == session_id]
+
+    def get_recent_requests(self, limit: int = 20) -> List[Dict[str, Any]]:
+        reqs = [v for k, v in self._store.items() if k.startswith("req:")]
+        return reqs[:limit]
 
     def record_event(self, request_id: str, batch_id: str, session_id: str, from_state: str, to_state: str, reason: str = "", payload: Optional[Dict[str, Any]] = None) -> None:
         events = self._store.setdefault("events_list", [])

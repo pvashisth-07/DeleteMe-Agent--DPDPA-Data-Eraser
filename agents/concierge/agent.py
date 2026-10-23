@@ -19,6 +19,7 @@ from agents.concierge.session import (
 )
 from agents.concierge.cards import (
     build_confirmation_card,
+    build_reply_card,
     build_review_card,
     build_status_card,
 )
@@ -91,18 +92,31 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
 
     # Route deterministic commands
     if intent == "status":
-        reqs = repo.get_all_open_requests()
+        reqs = repo.get_requests_for_session(sess.session_id)
+        if not reqs:
+            reqs = repo.get_all_open_requests()
+        if not reqs:
+            reqs = repo.get_recent_requests(limit=10)
+
         if not reqs:
             reply = f"{prefix}You have no active deletion requests.\nTo start, tell me which apps to delete you from (e.g., 'Delete me from Swiggy, Zomato and Paytm')."
             await ctx.send(sender, make_text_reply(reply))
         else:
-            table = ["| Company | State | Ticket ID | Deadline |", "|---|---|---|---|"]
+            table = [
+                "| Company | Status | Ticket ID | Deadline | Verified | Payment |",
+                "|---|---|---|---|---|---|",
+            ]
+            pay_label = "💡 Demo Bypass" if settings.PAYMENTS_BYPASS_FOR_DEMO else "💳 Confirmed"
             for r in reqs:
+                st = r.get("state", "UNKNOWN")
+                dl = (r.get("deadline_at") or "N/A")[:10]
+                tkt = r.get("ticket_id") or "Pending"
+                v_badge = "✅ Yes" if r.get("verified", 1) else "⚠️ No"
                 table.append(
-                    f"| {r['company_name']} | `{r['state']}` | {r.get('ticket_id') or 'Pending'} | {r.get('deadline_at', 'N/A')[:10]} |"
+                    f"| {r['company_name']} | `{st}` | {tkt} | {dl} | {v_badge} | {pay_label} |"
                 )
-            reply = f"{prefix}### Active Erasure Requests Status\n\n" + "\n".join(table) + COMMAND_FOOTER
-            card = build_status_card(reqs)
+            reply = f"{prefix}### DPDPA Erasure Requests Status\n\n" + "\n".join(table) + COMMAND_FOOTER
+            card = build_status_card(reqs, payment_status=pay_label)
             await ctx.send(sender, make_text_reply(reply, metadata=card))
         return
 
@@ -256,13 +270,20 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
             updated = repo.get_request(matched_req["request_id"]) or {}
             st = updated.get("state", "PROCESSED")
             tkt = updated.get("ticket_id") or "N/A"
+            card = build_reply_card(
+                company=matched_req["company_name"],
+                label=st,
+                ticket_id=tkt,
+                retained_items=[],
+                explanation=f"Inbound reply classified as {st} for {matched_req['company_name']}.",
+            )
             reply = (
                 f"{prefix}📥 **Inbound Reply Processed for {matched_req['company_name']}**\n"
                 f"- **Classified State:** `{st}`\n"
                 f"- **Ticket Reference:** `{tkt}`\n\n"
                 f"Type `STATUS` to inspect active tracking progress."
             )
-            await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER))
+            await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER, metadata=card))
             return
         else:
             await ctx.send(sender, make_text_reply(f"{prefix}No active requests found to associate this reply with."))

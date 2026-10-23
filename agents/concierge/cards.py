@@ -62,15 +62,19 @@ def build_review_card(
 
 def build_status_card(
     requests: List[Dict[str, Any]],
+    payment_status: Optional[str] = None,
 ) -> Dict[str, str]:
     items = []
     for r in requests:
+        verified_flag = bool(r.get("verified", True))
         items.append({
             "company": r.get("company_name"),
             "state": r.get("state"),
             "ticket_id": r.get("ticket_id") or "Pending",
             "deadline": (r.get("deadline_at") or "")[:10],
             "sent_at": (r.get("sent_at") or "")[:10],
+            "verified": "VERIFIED" if verified_flag else "UNVERIFIED",
+            "payment": r.get("payment_status") or payment_status or "Authorized",
         })
 
     payload = {
@@ -78,6 +82,7 @@ def build_status_card(
         "requests": items,
         "actions": [
             {"label": "Refresh Status", "command": "STATUS", "style": "secondary"},
+            {"label": "View Debug Trace", "command": "DEBUG", "style": "secondary"},
         ],
     }
     return {
