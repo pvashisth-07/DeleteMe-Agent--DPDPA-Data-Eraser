@@ -33,3 +33,21 @@
 - **Verified Query:** `"Delete me from Swiggy, Zomato and Paytm"`
 - **Protocol Flow:** `ChatMessage` -> `ChatAcknowledgement` -> Response Turn 1 (ask identity) -> Turn 2 (confirm list) -> Turn 3 (batch confirmed).
 
+
+## Preflight Diagnostics Results (2026-10-23T18:40:42.020567+00:00)
+
+| Subsystem | Status | Diagnostic Detail |
+|---|---|---|
+| **SMTP Gateway** | `SKIPPED` | SKIPPED (SMTP credentials not configured in .env - dry_run mode will be used) |
+| **Privacy Policy Reachability** | `PASS` | 3/3 reachable (www.swiggy.com: HTTP 200, www.zomato.com: HTTP 200, paytm.com: HTTP 200) |
+| **ASI:One LLM API** | `PASS` | PASSED (FakeASI1 active with mock key; deterministic fallback verified) |
+
+
+## Preflight Diagnostics Results (2026-10-23T19:19:37.412830+00:00)
+
+| Subsystem | Status | Diagnostic Detail |
+|---|---|---|
+| **SMTP Gateway** | `SKIPPED` | SKIPPED (SMTP credentials not configured in .env - dry_run mode will be used) |
+| **Privacy Policy Reachability** | `PASS` | 3/3 reachable (www.swiggy.com: HTTP 200, www.zomato.com: HTTP 200, paytm.com: HTTP 200) |
+| **ASI:One LLM API** | `PASS` | CONNECTED (ASI:One asi1 verified: delete) |
+
