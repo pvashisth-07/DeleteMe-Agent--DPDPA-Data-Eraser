@@ -39,7 +39,7 @@ repo = SqliteRepo(settings.DB_PATH)
 COMMAND_FOOTER = "\n\n---\n*Commands: YES to confirm | REMOVE <company> | CANCEL | STATUS | DEBUG*"
 
 # Initialize Concierge Agent
-is_mailbox = bool(settings.AGENT_MAILBOX_KEY)
+is_mailbox = bool(settings.AGENT_MAILBOX_KEY or settings.AGENTVERSE_KEY or settings.AGENTVERSE_API_KEY)
 concierge_agent = Agent(
     name="deleteme_concierge",
     seed=settings.CONCIERGE_SEED,

@@ -96,7 +96,7 @@ async def extract_intent(
     settings = get_settings()
     llm = client
     if llm is None:
-        if not settings.ASI1_API_KEY or "mock" in settings.ASI1_API_KEY.lower():
+        if settings.USE_FAKE_ASI1 or not settings.ASI1_API_KEY or "mock" in settings.ASI1_API_KEY.lower():
             llm = FakeASI1()
         else:
             llm = ASI1Client(

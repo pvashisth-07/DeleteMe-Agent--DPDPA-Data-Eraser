@@ -39,6 +39,7 @@ class Settings(BaseSettings):
 
     # Agentverse
     AGENTVERSE_API_KEY: Optional[str] = None
+    AGENTVERSE_KEY: Optional[str] = None
     AGENT_MAILBOX_KEY: Optional[str] = None
 
     # App Settings
