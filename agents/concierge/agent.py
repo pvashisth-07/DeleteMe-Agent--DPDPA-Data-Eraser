@@ -133,16 +133,54 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
         content_hash = compute_drafts_content_hash(drafts)
         token = generate_approval_token(batch_id, session_id, content_hash)
         repo.save_batch(batch_id, session_id, content_hash, "APPROVED", approval_token=token)
-        sess.state = SessionState.AWAITING_PAYMENT
+
+        # Dispatch all approved drafts in batch
+        from agents.dispatcher.agent import handle_dispatch_request
+        from shared.models import DispatchRequest
+
+        dispatch_results = []
+        for d in drafts:
+            disp_req = DispatchRequest(
+                session_id=session_id,
+                batch_id=batch_id,
+                request_id=d["request_id"],
+                company_name=d["company_name"],
+                recipient_email=d["recipient_email"],
+                subject=d["subject"],
+                body=d["body"],
+                approval_token=token,
+                content_hash=d["content_hash"],
+                user_email=sess.user_email or "",
+            )
+            class DispCtx:
+                def __init__(self):
+                    self.result = None
+                async def send(self, _, res):
+                    self.result = res
+            dctx = DispCtx()
+            await handle_dispatch_request(dctx, concierge_agent.address, disp_req)
+            if dctx.result:
+                dispatch_results.append(dctx.result)
+
+        sess.state = SessionState.TRACKING
         save_session(repo, sess)
 
-        reply = (
-            f"{prefix}✅ **Batch Approved!**\n\n"
-            f"- **Batch ID:** `{batch_id}`\n"
-            f"- **HMAC Approval Token:** `{token[:16]}...`\n"
-            f"- **Companies ({len(drafts)}):** {', '.join([d['company_name'] for d in drafts])}\n\n"
-            f"Gate unlocked. Ready for dispatch under Send Mode: `{settings.SEND_MODE}`."
-        )
+        lines = [
+            f"{prefix}🚀 **Batch Approved & Dispatched!**\n",
+            f"- **Batch ID:** `{batch_id}`",
+            f"- **HMAC Approval Token:** `{token[:16]}...`",
+            f"- **Send Mode:** `{settings.SEND_MODE}`",
+            "- **Statutory Response Window:** 30 Days\n",
+            "### Dispatch Status:",
+        ]
+        for res in dispatch_results:
+            icon = "✅" if res.status == "SENT" else "❌"
+            deadline_str = res.deadline_at[:10] if res.deadline_at else "N/A"
+            lines.append(f"{icon} **{res.company_name}**: `{res.status}` | Deadline: `{deadline_str}` (Ref: `{res.request_id}`)")
+
+        lines.append("\nOur autonomous tracker is now monitoring for replies and 30-day statutory deadlines.")
+        lines.append("Type `STATUS` at any time to inspect your active requests.")
+        reply = "\n".join(lines)
         await ctx.send(sender, make_text_reply(reply))
         return
 
