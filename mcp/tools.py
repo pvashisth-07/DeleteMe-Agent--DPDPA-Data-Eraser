@@ -81,9 +81,10 @@ async def fetch_policy_html(url: str, repo: Optional[SqliteRepo] = None) -> str:
     except Exception as e:
         logger.warning(f"Failed to fetch live policy from {url}: {e}")
 
-    # Fallback default fixture if available
-    fixture = fixtures_dir / "swiggy_policy.html"
-    return fixture.read_text(encoding="utf-8") if fixture.exists() else ""
+    if "swiggy" in url.lower():
+        fixture = fixtures_dir / "swiggy_policy.html"
+        return fixture.read_text(encoding="utf-8") if fixture.exists() else ""
+    return ""
 
 
 def extract_officer_and_email_from_html(html: str, domain: str) -> Tuple[Optional[str], str, bool]:

@@ -11,7 +11,7 @@ class UserProfile(Model):
     name: str
     email: str
     phone: Optional[str] = None
-    identifiers: Dict[str, str] = Field(default_factory=dict)
+    identifiers: Optional[Dict[str, str]] = None
 
 
 class DiscoveryRequest(Model):
