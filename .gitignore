@@ -29,6 +29,7 @@ ENV/
 # Environment and Secrets
 .env
 *.local.env
+private_keys.json
 
 # Database and SQLite
 *.db

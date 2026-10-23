@@ -166,7 +166,8 @@ class FakeASI1:
         messages: List[Dict[str, str]],
         purpose: str = "fake_json_completion",
     ) -> T:
-        prompt_text = " ".join([m.get("content", "") for m in messages])
+        user_texts = [m.get("content", "") for m in messages if m.get("role") == "user"]
+        prompt_text = " ".join(user_texts) if user_texts else " ".join([m.get("content", "") for m in messages])
         start_time = time.time()
 
         if schema == IntentExtraction:
@@ -213,16 +214,35 @@ class FakeASI1:
         elif "debug" in text_norm:
             intent = "debug"
 
-        # Company matching
+        # Canonical Indian consumer apps mapping
+        known_map = {
+            "swiggy": "Swiggy",
+            "zomato": "Zomato",
+            "paytm": "Paytm",
+            "phonepe": "PhonePe",
+            "flipkart": "Flipkart",
+            "myntra": "Myntra",
+            "meesho": "Meesho",
+            "ola": "Ola",
+            "uber": "Uber India",
+            "rapido": "Rapido",
+            "zepto": "Zepto",
+            "blinkit": "Blinkit",
+            "bigbasket": "BigBasket",
+            "nykaa": "Nykaa",
+            "makemytrip": "MakeMyTrip",
+            "goibibo": "Goibibo",
+            "irctc": "IRCTC",
+            "bookmyshow": "BookMyShow",
+            "dream11": "Dream11",
+            "cred": "CRED",
+            "groww": "Groww",
+            "zerodha": "Zerodha",
+        }
         found_companies = []
-        known = [
-            "swiggy", "zomato", "paytm", "phonepe", "flipkart", "myntra",
-            "meesho", "ola", "uber", "rapido", "zepto", "blinkit",
-            "bigbasket", "nykaa", "makemytrip", "cred", "groww", "zerodha"
-        ]
-        for c in known:
-            if re.search(r"\b" + c + r"\b", text_norm):
-                found_companies.append(c.title())
+        for k, canonical in known_map.items():
+            if re.search(r"\b" + k + r"\b", text_norm):
+                found_companies.append(canonical)
 
         # Email extraction
         email_match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text)
