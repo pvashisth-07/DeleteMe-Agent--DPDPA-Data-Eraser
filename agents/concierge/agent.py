@@ -37,6 +37,7 @@ settings = get_settings()
 repo = SqliteRepo(settings.DB_PATH)
 
 COMMAND_FOOTER = "\n\n---\n*Commands: YES to confirm | REMOVE <company> | CANCEL | STATUS | DEBUG*"
+STATUS_FOOTER = "\n\n---\n*Commands: Delete me from <Company> (e.g. 'Delete me from Blinkit') | STATUS | DEBUG*"
 
 # Initialize Concierge Agent
 is_mailbox = bool(settings.AGENT_MAILBOX_KEY or settings.AGENTVERSE_KEY or settings.AGENTVERSE_API_KEY)
@@ -119,14 +120,14 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
                 table.append(
                     f"| {r['company_name']} | `{st}` | {tkt} | {dl} | {v_badge} | {pay_label} |"
                 )
-            reply = f"{prefix}### DPDPA Erasure Requests Status\n\n" + "\n".join(table) + COMMAND_FOOTER
+            reply = f"{prefix}### DPDPA Erasure Requests Status\n\n" + "\n".join(table) + STATUS_FOOTER
             card = build_status_card(reqs, payment_status=pay_label)
             await ctx.send(sender, make_text_reply(reply, metadata=card))
         return
 
     if intent == "debug":
         trace_str = global_trace_collector.format_debug_trace()
-        reply = f"{prefix}```\n{trace_str}\n```" + COMMAND_FOOTER
+        reply = f"{prefix}```\n{trace_str}\n```" + STATUS_FOOTER
         await ctx.send(sender, make_text_reply(reply))
         return
 
@@ -226,6 +227,8 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
                     await handle_track_request(TrackCtx(), concierge_agent.address, track_req)
 
         sess.state = SessionState.TRACKING
+        sess.companies = []
+        sess.batch_id = ""
         save_session(repo, sess)
 
         lines = [
@@ -243,6 +246,7 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
             lines.append(f"{icon} **{res.company_name}**: `{res.status}` | Deadline: `{deadline_str}` (Ref: `{res.request_id}`)")
 
         lines.append("\nOur autonomous tracker is now monitoring for replies and 30-day statutory deadlines.")
+        lines.append("To delete your data from another company, simply tell me: *\"Delete me from <Company>\"* (e.g. *Delete me from Blinkit*).")
         lines.append("Type `STATUS` at any time to inspect your active requests.")
         reply = "\n".join(lines)
         await ctx.send(sender, make_text_reply(reply))
@@ -364,6 +368,31 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
             return
 
     if intent == "confirm" or text.lower() in ["yes", "confirm", "proceed", "yep", "haan", "ok", "okay", "sure", "y"]:
+        active_reqs = repo.get_requests_for_session(sess.session_id) or repo.get_all_open_requests()
+        existing_companies = [r["company_name"].lower() for r in active_reqs if r.get("state") in ["SENT", "ACKNOWLEDGED", "RESOLVED", "PARTIAL", "OVERDUE", "FOLLOWUP_SENT", "ESCALATION_DRAFTED"]]
+        new_pending_companies = [c for c in sess.companies if c.lower() not in existing_companies]
+
+        if not new_pending_companies and active_reqs:
+            active_names = ", ".join(sorted(list(set([r["company_name"] for r in active_reqs]))))
+            reply = (
+                f"{prefix}✅ **Your deletion requests for {active_names} have already been raised!**\n\n"
+                f"Our autonomous tracker is currently monitoring them for company responses and the 30-day statutory deadline.\n\n"
+                f"• **Want to delete your data from another company?** Simply tell me: *\"Delete me from <Company Name>\"* (e.g., *Delete me from Blinkit* or *Paytm*).\n"
+                f"• Type `STATUS` anytime to check your live dashboard."
+            )
+            sess.companies = []
+            save_session(repo, sess)
+            await ctx.send(sender, make_text_reply(reply))
+            return
+
+        if not sess.companies:
+            reply = (
+                f"{prefix}You don't have any pending deletion requests.\n"
+                f"Tell me which company you'd like to be deleted from (e.g., *\"Delete me from Blinkit\"*)."
+            )
+            await ctx.send(sender, make_text_reply(reply))
+            return
+
         if sess.companies and sess.user_name and sess.user_email:
             drafts, failures, batch_hash = await orchestrate_batch_discovery_and_drafting(sess, repo)
             sections = []
