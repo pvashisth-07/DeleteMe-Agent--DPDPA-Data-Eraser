@@ -12,6 +12,9 @@ logger = setup_logger("concierge_intent")
 def parse_deterministic_command(text: str) -> Optional[IntentExtraction]:
     """Checks for explicit command keywords before invoking the LLM."""
     clean = text.strip()
+    # Strip any @mentions that web chat interfaces prepend (e.g. @agent1qfq... YES)
+    clean = re.sub(r"^@agent1[a-z0-9]+\s*", "", clean, flags=re.IGNORECASE).strip()
+    clean = re.sub(r"^@[a-zA-Z0-9_\-]+\s*", "", clean, flags=re.IGNORECASE).strip()
     clean_lower = clean.lower()
 
     if not clean:
@@ -37,8 +40,8 @@ def parse_deterministic_command(text: str) -> Optional[IntentExtraction]:
             raw_parameters={"instruction": instruction},
         )
 
-    # REMOVE <company>
-    m_remove = re.match(r"^remove\s+([a-zA-Z0-9\s]+)$", clean, re.IGNORECASE)
+    # REMOVE <company> / REMOVE FROM <company> / YES REMOVE <company>
+    m_remove = re.match(r"^(?:yes\s+)?remove(?:\s+from)?\s+([a-zA-Z0-9\s]+)$", clean, re.IGNORECASE)
     if m_remove:
         company = m_remove.group(1).strip().title()
         return IntentExtraction(
@@ -59,7 +62,7 @@ def parse_deterministic_command(text: str) -> Optional[IntentExtraction]:
         return IntentExtraction(intent="debug")
 
     # YES / CONFIRM
-    if clean_lower in ["yes", "confirm", "proceed", "yep", "haan"]:
+    if clean_lower in ["yes", "confirm", "proceed", "yep", "haan", "ok", "okay", "sure", "y"]:
         return IntentExtraction(intent="confirm")
 
     # Reply from <Company>: <body>
@@ -111,7 +114,7 @@ async def extract_intent(
             "content": (
                 "You are an intent extraction assistant for a privacy agent in India (DPDPA 2023). "
                 "Analyze the user's message and extract: "
-                "1. intent: 'delete' (for requesting data deletion / erasure), 'status' (checking progress), "
+                "1. intent: 'delete' (for requesting data deletion / erasure), 'confirm' (user says yes/proceed to draft notices), 'status' (checking progress), "
                 "'approve', 'edit', 'remove', 'cancel', 'debug', 'reply_paste', or 'other'. "
                 "2. companies: list of Indian consumer app / company names mentioned (e.g., Swiggy, Zomato, Paytm). Deduplicate and capitalize. "
                 "3. name: the user's full name if provided. "

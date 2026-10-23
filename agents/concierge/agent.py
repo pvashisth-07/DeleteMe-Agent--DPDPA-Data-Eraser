@@ -64,6 +64,9 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
         elif hasattr(item, "text"):
             text += getattr(item, "text") + " "
     text = text.strip()
+    import re
+    text = re.sub(r"^@agent1[a-z0-9]+\s*", "", text, flags=re.IGNORECASE).strip()
+    text = re.sub(r"^@[a-zA-Z0-9_\-]+\s*", "", text, flags=re.IGNORECASE).strip()
 
     session_id = sender
     sess = load_session(repo, session_id)
@@ -137,10 +140,14 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
     if intent == "approve":
         batch_id = extraction.raw_parameters.get("batch_id") or sess.batch_id
         if not batch_id:
-            await ctx.send(sender, make_text_reply(f"{prefix}No active batch to approve. Please submit your companies first."))
-            return
+            if sess.companies and sess.user_name and sess.user_email:
+                intent = "confirm"
+            else:
+                await ctx.send(sender, make_text_reply(f"{prefix}No active batch to approve. Please submit your companies first."))
+                return
 
-        drafts = repo.get_drafts_for_batch(batch_id)
+        if intent == "approve":
+            drafts = repo.get_drafts_for_batch(batch_id)
         if not drafts:
             await ctx.send(sender, make_text_reply(f"{prefix}No drafted notices found for batch `{batch_id}`. Reply YES to draft first."))
             return
@@ -356,7 +363,7 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
             await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER))
             return
 
-    if intent == "confirm" or text.lower() in ["yes", "confirm", "proceed"]:
+    if intent == "confirm" or text.lower() in ["yes", "confirm", "proceed", "yep", "haan", "ok", "okay", "sure", "y"]:
         if sess.companies and sess.user_name and sess.user_email:
             drafts, failures, batch_hash = await orchestrate_batch_discovery_and_drafting(sess, repo)
             sections = []
