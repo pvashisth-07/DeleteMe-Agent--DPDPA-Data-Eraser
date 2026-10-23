@@ -1,0 +1,11 @@
+Dear Data Principal,
+
+We are writing to confirm that your request for erasure under the Digital Personal Data Protection Act has been successfully executed.
+
+All personal data, profile identifiers, behavioral tracking records, saved delivery addresses, and user account history associated with your registered email have been permanently deleted and purged from all Swiggy active databases and data processor systems.
+
+Confirmation Reference: SWIGGY-PURGE-CONFIRMED-9921
+Status: Erasure Complete
+
+Sincerely,
+Swiggy Data Protection Office

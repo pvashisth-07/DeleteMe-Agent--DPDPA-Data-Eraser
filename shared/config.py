@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     ASI1_API_KEY: str = Field(default="mock-asi1-key")
     ASI1_BASE_URL: str = Field(default="https://api.asi1.ai/v1")
     ASI1_MODEL: str = Field(default="asi1")
+    USE_FAKE_ASI1: bool = Field(default=True)
 
     # Agent Seeds
     CONCIERGE_SEED: str = Field(default="deleteme_concierge_seed")

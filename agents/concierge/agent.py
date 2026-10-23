@@ -182,6 +182,26 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
             await handle_dispatch_request(dctx, concierge_agent.address, disp_req)
             if dctx.result:
                 dispatch_results.append(dctx.result)
+                if dctx.result.status == "SENT":
+                    # Handoff to Tracker agent
+                    from agents.tracker.agent import handle_track_request
+                    from shared.models import TrackRequest
+                    track_req = TrackRequest(
+                        session_id=session_id,
+                        batch_id=batch_id,
+                        request_id=d["request_id"],
+                        company_name=d["company_name"],
+                        recipient_email=d["recipient_email"],
+                        user_email=sess.user_email or "",
+                        sent_at=dctx.result.sent_at or now_iso(),
+                        deadline_at=dctx.result.deadline_at or now_iso(),
+                        subject=d["subject"],
+                        payment_ref=payment_ref,
+                    )
+                    class TrackCtx:
+                        async def send(self, _, msg):
+                            pass
+                    await handle_track_request(TrackCtx(), concierge_agent.address, track_req)
 
         sess.state = SessionState.TRACKING
         save_session(repo, sess)
@@ -205,6 +225,48 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
         reply = "\n".join(lines)
         await ctx.send(sender, make_text_reply(reply))
         return
+
+    if intent == "reply_paste":
+        company = extraction.companies[0] if extraction.companies else ""
+        open_reqs = repo.get_all_open_requests()
+        matched_req = None
+        if company:
+            matched_req = next((r for r in open_reqs if r.get("company_name", "").lower() == company.lower()), None)
+        if not matched_req and open_reqs:
+            matched_req = open_reqs[0]
+
+        if matched_req:
+            from agents.tracker.agent import handle_inbound_reply
+            from shared.models import InboundReply
+            inbound_msg = InboundReply(
+                session_id=sess.session_id,
+                batch_id=matched_req.get("batch_id"),
+                request_id=matched_req["request_id"],
+                company_name=matched_req["company_name"],
+                from_email=matched_req.get("recipient_email", ""),
+                subject=f"Re: Data Erasure Request - {matched_req['company_name']}",
+                body=text,
+                received_at=now_iso(),
+            )
+            class InboundCtx:
+                async def send(self, _, msg):
+                    pass
+            await handle_inbound_reply(InboundCtx(), concierge_agent.address, inbound_msg)
+
+            updated = repo.get_request(matched_req["request_id"]) or {}
+            st = updated.get("state", "PROCESSED")
+            tkt = updated.get("ticket_id") or "N/A"
+            reply = (
+                f"{prefix}📥 **Inbound Reply Processed for {matched_req['company_name']}**\n"
+                f"- **Classified State:** `{st}`\n"
+                f"- **Ticket Reference:** `{tkt}`\n\n"
+                f"Type `STATUS` to inspect active tracking progress."
+            )
+            await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER))
+            return
+        else:
+            await ctx.send(sender, make_text_reply(f"{prefix}No active requests found to associate this reply with."))
+            return
 
     if intent == "edit":
         company = extraction.companies[0] if extraction.companies else ""
@@ -366,6 +428,21 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
 # Include ACP protocol with manifest publishing enabled
 chat_protocol = build_chat_protocol(handle_chat_message)
 concierge_agent.include(chat_protocol, publish_manifest=True)
+
+
+from shared.models import StatusUpdate
+
+
+@concierge_agent.on_message(model=StatusUpdate)
+async def handle_status_update(ctx: Context, sender: str, msg: StatusUpdate):
+    logger.info(f"Concierge received StatusUpdate: {msg.company_name} -> {msg.state} (Details: {msg.details})")
+    global_trace_collector.record_agent_call(
+        agent_name="deleteme_tracker",
+        agent_addr=sender,
+        action=f"update:{msg.company_name}:{msg.state}",
+        duration_ms=0,
+        status=msg.state,
+    )
 
 
 @concierge_agent.on_event("startup")

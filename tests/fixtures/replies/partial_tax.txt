@@ -1,0 +1,16 @@
+Dear Customer,
+
+In response to your personal data erasure request, we have deleted your Zomato user profile, saved payment instruments, personalized marketing preferences, and loyalty program history.
+
+However, please be informed of a partial retention:
+Pursuant to mandatory statutory obligations under Section 44AA of the Income Tax Act, 1961 and the Central Goods and Services Tax (CGST) Act, 2017, we are legally required to retain transaction invoices, financial payment receipts, and delivery tax ledgers for a statutory retention period of 7 years from the end of the relevant financial year.
+
+Retained Items:
+- GST Tax Invoices
+- Past Order Financial Receipts
+- Ledger Transaction Records
+
+These records have been isolated, archived, and access is restricted solely to authorized compliance audits.
+
+Regards,
+Zomato Legal & Compliance Team

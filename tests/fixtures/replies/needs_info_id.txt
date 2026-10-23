@@ -1,0 +1,12 @@
+Dear User,
+
+To ensure the security and privacy of account holders, we require verification of your identity before we can proceed with any personal data erasure under the DPDP regulations.
+
+Please provide one of the following verification details by replying directly from your registered email:
+1. The last 4 digits of your registered mobile number and a verification selfie, or
+2. A masked copy of a Government-issued Photo ID (e.g., Voter ID or Driving Licence).
+
+Please note that our agents cannot accept ID documents sent via third-party automated tools; you must respond to this ticket directly.
+
+Reference: ID-VERIFY-REQ-5510
+Security & Compliance Team

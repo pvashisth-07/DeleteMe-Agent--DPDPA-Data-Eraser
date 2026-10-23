@@ -1,0 +1,18 @@
+Dear User,
+
+We have processed your request for erasure and removed your application login credentials, contact sync permissions, and promotional profile.
+
+Please note that under the Prevention of Money Laundering Act (PMLA), 2002 and the Reserve Bank of India (RBI) Master Directions on Know Your Customer (KYC), regulated financial fiduciaries are mandated to maintain:
+- Customer Due Diligence (CDD) records
+- KYC identification documents and bank account verification logs
+- Core transaction records
+for a period of 5 years following the cessation of the business relationship.
+
+Retention Category: Regulatory Financial & KYC Records
+Statutory Authority: RBI KYC Master Directions / PMLA 2002
+Retention Period: 5 years
+
+Upon expiration of this statutory period, these remaining records will be scheduled for automatic destruction.
+
+Yours faithfully,
+Grievance Officer, FinTech Services
