@@ -134,6 +134,26 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
         token = generate_approval_token(batch_id, session_id, content_hash)
         repo.save_batch(batch_id, session_id, content_hash, "APPROVED", approval_token=token)
 
+        # Payment Protocol Gate: Process User -> Concierge Payment
+        from shared.payments import process_user_batch_payment, process_inter_agent_micropayment
+        from agents.concierge.registry import resolve_agent_address
+        authorized, payment_ref, payment_label = await process_user_batch_payment(
+            repo=repo,
+            user_address=sender,
+            concierge_address=concierge_agent.address,
+            batch_id=batch_id,
+        )
+        if not authorized:
+            await ctx.send(sender, make_text_reply(f"{prefix}Payment authorization failed for batch `{batch_id}`. Please retry."))
+            return
+
+        # Process Inter-Agent Micropayments (Concierge -> Discovery & Tracker)
+        disc_addr = await resolve_agent_address("discovery")
+        track_addr = await resolve_agent_address("tracker")
+        for d in drafts:
+            await process_inter_agent_micropayment(repo, concierge_agent.address, disc_addr, "discovery_lookup_fee", d["request_id"])
+            await process_inter_agent_micropayment(repo, concierge_agent.address, track_addr, "tracking_fee", d["request_id"])
+
         # Dispatch all approved drafts in batch
         from agents.dispatcher.agent import handle_dispatch_request
         from shared.models import DispatchRequest
@@ -151,6 +171,7 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
                 approval_token=token,
                 content_hash=d["content_hash"],
                 user_email=sess.user_email or "",
+                payment_ref=payment_ref,
             )
             class DispCtx:
                 def __init__(self):
@@ -167,6 +188,7 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
 
         lines = [
             f"{prefix}🚀 **Batch Approved & Dispatched!**\n",
+            f"{payment_label}\n",
             f"- **Batch ID:** `{batch_id}`",
             f"- **HMAC Approval Token:** `{token[:16]}...`",
             f"- **Send Mode:** `{settings.SEND_MODE}`",
