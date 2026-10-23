@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deleteme-dpdpa-agent"
+version = "0.1.0"
+description = "Autonomous DPDPA Rights Agent for Indian Consumers built on Fetch.ai uAgents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "uagents==0.26.1",
+    "uagents-core==0.4.12",
+    "pydantic==2.14.1",
+    "pydantic-settings==2.16.1",
+    "httpx==0.28.1",
+    "beautifulsoup4==4.15.0",
+    "tenacity==9.2.1",
+    "python-dotenv==1.2.4",
+    "pyyaml==6.0.3",
+    "openai==3.37.0",
+    "mcp==2.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"

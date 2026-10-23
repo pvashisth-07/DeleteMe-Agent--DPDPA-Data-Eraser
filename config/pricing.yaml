@@ -1,0 +1,12 @@
+# Monetization and Pricing Configuration (Testnet Only)
+
+currency: "atestfet"
+denomination: "FET"
+
+# Fees represented in base units (attotokens, 10^18 = 1 FET)
+batch_fee: "1000000000000000"          # 0.001 FET per user batch request
+discovery_lookup_fee: "100000000000000"  # 0.0001 FET per specialist lookup
+tracking_fee: "200000000000000"         # 0.0002 FET per long-running tracking request
+
+# Default bypass flag for deterministic offline tests and live demo evaluations
+bypass_for_demo: true

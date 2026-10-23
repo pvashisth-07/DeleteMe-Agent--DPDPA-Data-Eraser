@@ -1,0 +1,212 @@
+[
+  {
+    "name": "Swiggy",
+    "aliases": ["swiggy", "bundl technologies", "swiggy food", "swiggy instamart"],
+    "domain": "swiggy.in",
+    "privacy_policy_url": "https://www.swiggy.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Zomato",
+    "aliases": ["zomato", "zomato limited", "zomato food"],
+    "domain": "zomato.com",
+    "privacy_policy_url": "https://www.zomato.com/privacy",
+    "contact_email": null
+  },
+  {
+    "name": "Paytm",
+    "aliases": ["paytm", "one97", "one97 communications", "paytm payments"],
+    "domain": "paytm.com",
+    "privacy_policy_url": "https://paytm.com/policies/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "PhonePe",
+    "aliases": ["phonepe", "phonepe india"],
+    "domain": "phonepe.com",
+    "privacy_policy_url": "https://www.phonepe.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Flipkart",
+    "aliases": ["flipkart", "flipkart internet"],
+    "domain": "flipkart.com",
+    "privacy_policy_url": "https://www.flipkart.com/pages/privacypolicy",
+    "contact_email": null
+  },
+  {
+    "name": "Myntra",
+    "aliases": ["myntra", "myntra designs"],
+    "domain": "myntra.com",
+    "privacy_policy_url": "https://www.myntra.com/privacypolicy",
+    "contact_email": null
+  },
+  {
+    "name": "Meesho",
+    "aliases": ["meesho", "fashnear"],
+    "domain": "meesho.com",
+    "privacy_policy_url": "https://www.meesho.com/legal/privacy",
+    "contact_email": null
+  },
+  {
+    "name": "Ola",
+    "aliases": ["ola", "ani technologies", "ola cabs"],
+    "domain": "olacabs.com",
+    "privacy_policy_url": "https://www.olacabs.com/info/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Uber India",
+    "aliases": ["uber", "uber india", "uber rides"],
+    "domain": "uber.com",
+    "privacy_policy_url": "https://www.uber.com/legal/en/document/?name=privacy-notice&country=india",
+    "contact_email": null
+  },
+  {
+    "name": "Rapido",
+    "aliases": ["rapido", "roppen transportation"],
+    "domain": "rapido.bike",
+    "privacy_policy_url": "https://www.rapido.bike/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Zepto",
+    "aliases": ["zepto", "kiranakart"],
+    "domain": "zeptonow.com",
+    "privacy_policy_url": "https://www.zeptonow.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Blinkit",
+    "aliases": ["blinkit", "grofers"],
+    "domain": "blinkit.com",
+    "privacy_policy_url": "https://blinkit.com/privacy",
+    "contact_email": null
+  },
+  {
+    "name": "BigBasket",
+    "aliases": ["bigbasket", "supermarket grocery supplies"],
+    "domain": "bigbasket.com",
+    "privacy_policy_url": "https://www.bigbasket.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Nykaa",
+    "aliases": ["nykaa", "fsn e-commerce"],
+    "domain": "nykaa.com",
+    "privacy_policy_url": "https://www.nykaa.com/gateway-api/static/pages/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "MakeMyTrip",
+    "aliases": ["makemytrip", "mmt"],
+    "domain": "makemytrip.com",
+    "privacy_policy_url": "https://www.makemytrip.com/legal/privacy_policy.html",
+    "contact_email": null
+  },
+  {
+    "name": "Goibibo",
+    "aliases": ["goibibo", "ibibo group"],
+    "domain": "goibibo.com",
+    "privacy_policy_url": "https://www.goibibo.com/info/privacy-policy/",
+    "contact_email": null
+  },
+  {
+    "name": "IRCTC",
+    "aliases": ["irctc", "indian railway catering"],
+    "domain": "irctc.co.in",
+    "privacy_policy_url": "https://www.irctc.co.in/eticketing/privacyPolicy.jsf",
+    "contact_email": null
+  },
+  {
+    "name": "BookMyShow",
+    "aliases": ["bookmyshow", "bms", "bigtree entertainment"],
+    "domain": "bookmyshow.com",
+    "privacy_policy_url": "https://in.bookmyshow.com/privacy",
+    "contact_email": null
+  },
+  {
+    "name": "Dream11",
+    "aliases": ["dream11", "sporta technologies"],
+    "domain": "dream11.com",
+    "privacy_policy_url": "https://www.dream11.com/about-us/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "MPL",
+    "aliases": ["mpl", "mobile premier league", "galactus funware"],
+    "domain": "mpl.live",
+    "privacy_policy_url": "https://www.mpl.live/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "CRED",
+    "aliases": ["cred", "dreamplug technologies"],
+    "domain": "cred.club",
+    "privacy_policy_url": "https://cred.club/privacy",
+    "contact_email": null
+  },
+  {
+    "name": "Groww",
+    "aliases": ["groww", "nextbillion technology"],
+    "domain": "groww.in",
+    "privacy_policy_url": "https://groww.in/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Zerodha",
+    "aliases": ["zerodha", "zerodha broking"],
+    "domain": "zerodha.com",
+    "privacy_policy_url": "https://zerodha.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Lenskart",
+    "aliases": ["lenskart", "lenskart solutions"],
+    "domain": "lenskart.com",
+    "privacy_policy_url": "https://www.lenskart.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Urban Company",
+    "aliases": ["urban company", "urbanclap"],
+    "domain": "urbancompany.com",
+    "privacy_policy_url": "https://www.urbancompany.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Dunzo",
+    "aliases": ["dunzo", "dunzo digital"],
+    "domain": "dunzo.com",
+    "privacy_policy_url": "https://www.dunzo.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "JioMart",
+    "aliases": ["jiomart", "reliance retail jiomart"],
+    "domain": "jiomart.com",
+    "privacy_policy_url": "https://www.jiomart.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Ajio",
+    "aliases": ["ajio", "reliance retail ajio"],
+    "domain": "ajio.com",
+    "privacy_policy_url": "https://www.ajio.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "Swiggy Instamart",
+    "aliases": ["instamart", "swiggy quick"],
+    "domain": "swiggy.com",
+    "privacy_policy_url": "https://www.swiggy.com/privacy-policy",
+    "contact_email": null
+  },
+  {
+    "name": "ShareChat",
+    "aliases": ["sharechat", "mohalla tech"],
+    "domain": "sharechat.com",
+    "privacy_policy_url": "https://sharechat.com/privacy",
+    "contact_email": null
+  }
+]

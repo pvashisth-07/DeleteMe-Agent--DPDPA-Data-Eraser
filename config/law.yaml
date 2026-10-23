@@ -1,0 +1,111 @@
+# DPDPA Legal Configuration and Templates
+# Ground truth based on DPDPA 2023 and DPDP Rules 2025 (dpdpa.com)
+
+RESPONSE_DEADLINE_DAYS: 30  # TODO: verify against https://dpdpa.com/DPDP_Rules_2025_English_only.pdf
+law_in_force: false
+
+disclaimer: "This is general information, not legal advice."
+
+sources:
+  act_pdf: "https://dpdpa.com/DPDPA_2023_official.pdf"
+  rules_pdf: "https://dpdpa.com/DPDP_Rules_2025_English_only.pdf"
+  section_12: "https://dpdpa.com/dpdpa2023/chapter-3/section12.html"
+  section_13: "https://dpdpa.com/dpdpa2023/chapter-3/section13.html"
+
+templates:
+  erasure_pre_commencement: |
+    Subject: Request for Erasure of Personal Data - {company_name} - {user_name}
+
+    Dear Grievance Officer / Data Protection Team at {company_name},
+
+    I am writing to formally request the complete erasure of my personal data associated with my account, in proactive alignment with Section 12 of the Digital Personal Data Protection Act, 2023 (DPDPA) and the DPDP Rules 2025 (Rights of Data Principals).
+
+    Account Identification Details:
+    - Name: {user_name}
+    {identifiers_block}
+
+    In accordance with statutory data minimization and privacy principles:
+    1. Please erase all personal data, behavioral profiles, and account history that is no longer necessary for the primary purpose for which it was collected.
+    2. If any category of personal data must be retained pursuant to an overriding statutory obligation (such as tax or financial recordkeeping), please provide a written list specifying:
+       (a) the specific data items retained,
+       (b) the exact legal basis and statutory provision requiring retention, and
+       (c) the applicable retention period.
+    3. Please acknowledge receipt of this request and provide a grievance/ticket reference ID for tracking.
+
+    I request a confirmation of resolution within {response_deadline_days} days.
+
+    Thank you for your cooperation.
+
+    Sincerely,
+    {user_name}
+
+    ---
+    Notice: {disclaimer}
+
+  erasure_post_commencement: |
+    Subject: Formal Notice for Erasure of Personal Data under Section 12, DPDPA 2023 - {company_name} - {user_name}
+
+    Dear Data Protection Officer / Grievance Officer at {company_name},
+
+    This is a formal notice exercising my statutory right to erasure under Section 12 of the Digital Personal Data Protection Act, 2023 and the DPDP Rules 2025.
+
+    Account Identification Details:
+    - Name: {user_name}
+    {identifiers_block}
+
+    As a Data Principal, I hereby instruct you as the Data Fiduciary to:
+    1. Erase all personal data concerning me without undue delay.
+    2. Cause any Data Processor engaged by you to erase such personal data.
+    3. Provide a written statement detailing any specific items retained, accompanied by the precise statutory exception and retention schedule.
+    4. Provide an official grievance reference ID.
+
+    Under applicable regulations, your formal response is expected within {response_deadline_days} days.
+
+    Sincerely,
+    {user_name}
+
+    ---
+    Notice: {disclaimer}
+
+  followup: |
+    Subject: FOLLOW-UP: Overdue Erasure Request [Ref: {ticket_id}] - {company_name} - {user_name}
+
+    Dear Grievance Officer at {company_name},
+
+    I am following up on my personal data erasure request submitted on {original_date} (Reference: {ticket_id}).
+
+    The standard response window of {response_deadline_days} days has lapsed without resolution. Under Section 13 of the Digital Personal Data Protection Act, 2023, data principals are entitled to timely grievance redressal.
+
+    Please provide an immediate status update on the erasure of my personal data or provide the statutory justification for any delay.
+
+    Sincerely,
+    {user_name}
+
+    ---
+    Notice: {disclaimer}
+
+  escalation: |
+    Subject: DRAFT Grievance Escalation to Data Protection Board of India - Failure of Grievance Redressal ({company_name})
+
+    PART A: DATA PRINCIPAL & FIDUCIARY
+    Data Principal: {user_name} ({user_email})
+    Data Fiduciary: {company_name} ({fiduciary_contact})
+
+    PART B: TIMELINE OF EXHAUSTED GRIEVANCE REDRESSAL (DPDPA Section 13(3))
+    - Initial Erasure Request: {sent_at}
+    - Follow-Up Notice: {followup_at}
+    - Total Elapsed Time: {days_elapsed} days
+    - Reference / Ticket ID: {ticket_id}
+
+    PART C: CORRESPONDENCE RECORD
+    {correspondence_log}
+
+    PART D: RELIEF SOUGHT
+    1. Direct the Data Fiduciary to immediately comply with Section 12 erasure requirements.
+    2. Direct the Data Fiduciary to provide full written accounting of any data retained under statutory exemptions.
+    3. Issue appropriate directions under the Digital Personal Data Protection Act, 2023.
+
+    Submitted on: {escalation_date}
+
+    ---
+    Notice: {disclaimer}
