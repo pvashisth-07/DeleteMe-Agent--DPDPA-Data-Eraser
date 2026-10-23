@@ -17,8 +17,15 @@ from agents.concierge.session import (
     load_session,
     save_session,
 )
+from agents.concierge.cards import (
+    build_confirmation_card,
+    build_review_card,
+    build_status_card,
+)
 from agents.concierge.orchestrator import orchestrate_batch_discovery_and_drafting
+from mcp.tools import compute_content_hash
 from shared.acp import build_chat_protocol, make_text_reply
+from shared.approval import compute_drafts_content_hash, generate_approval_token
 from shared.clock import now_iso
 from shared.config import get_law_config, get_settings
 from shared.db import SqliteRepo
@@ -87,6 +94,7 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
         reqs = repo.get_all_open_requests()
         if not reqs:
             reply = f"{prefix}You have no active deletion requests.\nTo start, tell me which apps to delete you from (e.g., 'Delete me from Swiggy, Zomato and Paytm')."
+            await ctx.send(sender, make_text_reply(reply))
         else:
             table = ["| Company | State | Ticket ID | Deadline |", "|---|---|---|---|"]
             for r in reqs:
@@ -94,7 +102,8 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
                     f"| {r['company_name']} | `{r['state']}` | {r.get('ticket_id') or 'Pending'} | {r.get('deadline_at', 'N/A')[:10]} |"
                 )
             reply = f"{prefix}### Active Erasure Requests Status\n\n" + "\n".join(table) + COMMAND_FOOTER
-        await ctx.send(sender, make_text_reply(reply))
+            card = build_status_card(reqs)
+            await ctx.send(sender, make_text_reply(reply, metadata=card))
         return
 
     if intent == "debug":
@@ -110,13 +119,98 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
         await ctx.send(sender, make_text_reply(reply))
         return
 
+    if intent == "approve":
+        batch_id = extraction.raw_parameters.get("batch_id") or sess.batch_id
+        if not batch_id:
+            await ctx.send(sender, make_text_reply(f"{prefix}No active batch to approve. Please submit your companies first."))
+            return
+
+        drafts = repo.get_drafts_for_batch(batch_id)
+        if not drafts:
+            await ctx.send(sender, make_text_reply(f"{prefix}No drafted notices found for batch `{batch_id}`. Reply YES to draft first."))
+            return
+
+        content_hash = compute_drafts_content_hash(drafts)
+        token = generate_approval_token(batch_id, session_id, content_hash)
+        repo.save_batch(batch_id, session_id, content_hash, "APPROVED", approval_token=token)
+        sess.state = SessionState.AWAITING_PAYMENT
+        save_session(repo, sess)
+
+        reply = (
+            f"{prefix}✅ **Batch Approved!**\n\n"
+            f"- **Batch ID:** `{batch_id}`\n"
+            f"- **HMAC Approval Token:** `{token[:16]}...`\n"
+            f"- **Companies ({len(drafts)}):** {', '.join([d['company_name'] for d in drafts])}\n\n"
+            f"Gate unlocked. Ready for dispatch under Send Mode: `{settings.SEND_MODE}`."
+        )
+        await ctx.send(sender, make_text_reply(reply))
+        return
+
+    if intent == "edit":
+        company = extraction.companies[0] if extraction.companies else ""
+        instruction = extraction.raw_parameters.get("instruction", "")
+        batch_id = sess.batch_id
+        drafts = repo.get_drafts_for_batch(batch_id) if batch_id else []
+        matched = next((d for d in drafts if d["company_name"].lower() == company.lower()), None)
+        if matched:
+            new_body = matched["body"] + f"\n\nAdditional Note: {instruction}"
+            new_hash = compute_content_hash(matched["subject"], new_body, matched["recipient_email"])
+            repo.save_draft(
+                request_id=matched["request_id"],
+                batch_id=batch_id,
+                session_id=session_id,
+                company_name=matched["company_name"],
+                recipient_email=matched["recipient_email"],
+                subject=matched["subject"],
+                body=new_body,
+                content_hash=new_hash,
+                verified=bool(matched["verified"]),
+            )
+            # Invalidate previous approval token
+            updated_drafts = repo.get_drafts_for_batch(batch_id)
+            new_batch_hash = compute_drafts_content_hash(updated_drafts)
+            repo.save_batch(batch_id, session_id, new_batch_hash, "AWAITING_APPROVAL", approval_token=None)
+            sess.state = SessionState.AWAITING_APPROVAL
+            save_session(repo, sess)
+
+            card = build_review_card(batch_id, settings.SEND_MODE, updated_drafts)
+            reply = (
+                f"{prefix}📝 Updated draft for **{company}** with: *\"{instruction}\"*.\n"
+                f"Previous approval token **invalidated** (new hash: `{new_batch_hash[:12]}...`).\n\n"
+                f"**To approve updated batch, reply:** `APPROVE {batch_id}`"
+            )
+            await ctx.send(sender, make_text_reply(reply, metadata=card))
+            return
+        else:
+            await ctx.send(sender, make_text_reply(f"{prefix}Company '{company}' not found in active batch drafts."))
+            return
+
     if intent == "remove":
         removed = extraction.companies
         sess.companies = [c for c in sess.companies if c.lower() not in [r.lower() for r in removed]]
-        save_session(repo, sess)
-        reply = f"{prefix}Removed {', '.join(removed)}. Remaining companies: {', '.join(sess.companies) if sess.companies else 'None'}."
-        await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER))
-        return
+        batch_id = sess.batch_id
+        if batch_id:
+            existing_drafts = repo.get_drafts_for_batch(batch_id)
+            remaining_drafts = [d for d in existing_drafts if d["company_name"].lower() not in [r.lower() for r in removed]]
+            new_batch_hash = compute_drafts_content_hash(remaining_drafts) if remaining_drafts else ""
+            repo.save_batch(batch_id, session_id, new_batch_hash, "AWAITING_APPROVAL", approval_token=None)
+            sess.state = SessionState.AWAITING_APPROVAL
+            save_session(repo, sess)
+
+            card = build_review_card(batch_id, settings.SEND_MODE, remaining_drafts)
+            reply = (
+                f"{prefix}Removed **{', '.join(removed)}**.\n"
+                f"Remaining companies: {', '.join([d['company_name'] for d in remaining_drafts]) or 'None'}.\n"
+                f"Previous approval token **invalidated**.\n\n"
+                f"**To approve updated batch, reply:** `APPROVE {batch_id}`"
+            )
+            await ctx.send(sender, make_text_reply(reply, metadata=card))
+            return
+        else:
+            save_session(repo, sess)
+            reply = f"{prefix}Removed {', '.join(removed)}. Remaining companies: {', '.join(sess.companies) if sess.companies else 'None'}."
+            await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER))
+            return
 
     if intent == "confirm" or text.lower() in ["yes", "confirm", "proceed"]:
         if sess.companies and sess.user_name and sess.user_email:
@@ -137,6 +231,7 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
             if failures:
                 fail_notes = "\n\n⚠️ **Partial Discovery Failures:**\n" + "\n".join([f"- {f['company']}: {f['reason']}" for f in failures])
 
+            card = build_review_card(sess.batch_id, settings.SEND_MODE, drafts, failures)
             reply = (
                 f"{prefix}## Review Your DPDPA Deletion Requests\n"
                 f"**Batch ID:** `{sess.batch_id}` | **Send Mode:** `{settings.SEND_MODE}`\n\n"
@@ -145,9 +240,10 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
                 + f"\n\n**To dispatch these notices, reply:** `APPROVE {sess.batch_id}`\n"
                 + "*Or customize: `EDIT <company>: <notes>` | `REMOVE <company>` | `CANCEL`*"
             )
+            await ctx.send(sender, make_text_reply(reply, metadata=card))
         else:
             reply = f"{prefix}Please specify the companies and your account email before proceeding."
-        await ctx.send(sender, make_text_reply(reply))
+            await ctx.send(sender, make_text_reply(reply))
         return
 
     # Update session profile details if provided

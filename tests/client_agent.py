@@ -158,6 +158,26 @@ async def run_roundtrip_test():
     assert "APPROVE" in third_reply
 
     print("[+] TURN 3 VERIFIED: 3 drafts returned with verified/unverified flags and APPROVE command prompt.")
+
+    # Turn 4: User replies "APPROVE <batch_id>"
+    import re
+    batch_match = re.search(r"batch_[a-zA-Z0-9]+", third_reply)
+    assert batch_match is not None, "Failed to find batch_id in third reply"
+    approved_batch_id = batch_match.group(0)
+
+    turn4_msg = ChatMessage(
+        timestamp=int(now().timestamp()),
+        msg_id=uuid4(),
+        content=[TextContent(type="text", text=f"APPROVE {approved_batch_id}")],
+    )
+    await send_ack(mock_ctx, test_sender, turn4_msg)
+    await handle_chat_message(mock_ctx, test_sender, turn4_msg)
+
+    fourth_reply = mock_ctx.replies[-1].content[0].text
+    assert "Batch Approved" in fourth_reply
+    assert "HMAC Approval Token" in fourth_reply
+
+    print("[+] TURN 4 VERIFIED: Batch approved, HMAC token generated, gate unlocked.")
     print("=" * 60)
     print("ALL CONCIERGE ACP ROUND-TRIP TESTS PASSED!")
     print("=" * 60)
