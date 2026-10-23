@@ -17,6 +17,7 @@ from agents.concierge.session import (
     load_session,
     save_session,
 )
+from agents.concierge.orchestrator import orchestrate_batch_discovery_and_drafting
 from shared.acp import build_chat_protocol, make_text_reply
 from shared.clock import now_iso
 from shared.config import get_law_config, get_settings
@@ -119,18 +120,34 @@ async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage) -> No
 
     if intent == "confirm" or text.lower() in ["yes", "confirm", "proceed"]:
         if sess.companies and sess.user_name and sess.user_email:
-            sess.state = SessionState.DISCOVERING
-            if not sess.batch_id:
-                sess.batch_id = f"batch_{uuid4().hex[:8]}"
-            save_session(repo, sess)
+            drafts, failures, batch_hash = await orchestrate_batch_discovery_and_drafting(sess, repo)
+            sections = []
+            for d in drafts:
+                badge = "✅ VERIFIED" if d["verified"] else "⚠️ UNVERIFIED (Please confirm)"
+                preview = d["body"][:200].replace("\n", " ") + "..."
+                sections.append(
+                    f"### {d['company_name']} [{badge}]\n"
+                    f"- **Recipient:** `{d['recipient_email']}`\n"
+                    f"- **Subject:** {d['subject']}\n"
+                    f"- **Preview:** *\"{preview}\"*\n"
+                    f"- **Content SHA256:** `{d['content_hash'][:12]}...`"
+                )
+
+            fail_notes = ""
+            if failures:
+                fail_notes = "\n\n⚠️ **Partial Discovery Failures:**\n" + "\n".join([f"- {f['company']}: {f['reason']}" for f in failures])
+
             reply = (
-                f"{prefix}✅ Confirmed! Starting discovery and drafting for {', '.join(sess.companies)}.\n"
-                f"Batch ID: `{sess.batch_id}`.\n"
-                "Looking up grievance officers and drafting your Section 12 notices now..."
+                f"{prefix}## Review Your DPDPA Deletion Requests\n"
+                f"**Batch ID:** `{sess.batch_id}` | **Send Mode:** `{settings.SEND_MODE}`\n\n"
+                + "\n\n".join(sections)
+                + fail_notes
+                + f"\n\n**To dispatch these notices, reply:** `APPROVE {sess.batch_id}`\n"
+                + "*Or customize: `EDIT <company>: <notes>` | `REMOVE <company>` | `CANCEL`*"
             )
         else:
             reply = f"{prefix}Please specify the companies and your account email before proceeding."
-        await ctx.send(sender, make_text_reply(reply + COMMAND_FOOTER))
+        await ctx.send(sender, make_text_reply(reply))
         return
 
     # Update session profile details if provided

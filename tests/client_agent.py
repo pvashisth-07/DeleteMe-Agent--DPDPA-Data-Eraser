@@ -98,7 +98,7 @@ async def run_roundtrip_test():
                         print(f"\n[CONCIERGE REPLY TO USER]:\n{c.text}\n")
 
     mock_ctx = MockContext()
-    test_sender = "agent1q_test_client_user_address"
+    test_sender = f"agent1q_test_{uuid4().hex[:8]}"
 
     # Turn 1: User says: "Delete me from Swiggy, Zomato and Paytm"
     turn1_msg = ChatMessage(
@@ -152,9 +152,12 @@ async def run_roundtrip_test():
     await handle_chat_message(mock_ctx, test_sender, turn3_msg)
 
     third_reply = mock_ctx.replies[-1].content[0].text
-    assert "Confirmed" in third_reply or "Batch ID" in third_reply
+    assert "Batch ID" in third_reply
+    assert "Swiggy" in third_reply and "Zomato" in third_reply and "Paytm" in third_reply
+    assert "VERIFIED" in third_reply
+    assert "APPROVE" in third_reply
 
-    print("[+] TURN 3 VERIFIED: Confirmed state reached, batch ID created.")
+    print("[+] TURN 3 VERIFIED: 3 drafts returned with verified/unverified flags and APPROVE command prompt.")
     print("=" * 60)
     print("ALL CONCIERGE ACP ROUND-TRIP TESTS PASSED!")
     print("=" * 60)
