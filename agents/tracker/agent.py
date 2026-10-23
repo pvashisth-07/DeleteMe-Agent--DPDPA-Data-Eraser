@@ -31,12 +31,13 @@ logger = setup_logger("tracker_agent")
 settings = get_settings()
 repo = SqliteRepo(settings.DB_PATH)
 
+is_mailbox = bool(settings.AGENT_MAILBOX_KEY)
 tracker_agent = Agent(
     name="deleteme_tracker",
     seed=settings.TRACKER_SEED,
     port=8004,
-    endpoint=["http://127.0.0.1:8004/submit"],
-    mailbox=bool(settings.AGENT_MAILBOX_KEY),
+    endpoint=None if is_mailbox else ["http://127.0.0.1:8004/submit"],
+    mailbox=is_mailbox,
     publish_agent_details=True,
 )
 

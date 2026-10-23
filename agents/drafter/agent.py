@@ -17,12 +17,13 @@ from shared.models import DraftRequest, DraftResult
 logger = setup_logger("drafter_agent")
 settings = get_settings()
 
+is_mailbox = bool(settings.AGENT_MAILBOX_KEY)
 drafter_agent = Agent(
     name="deleteme_drafter",
     seed=settings.DRAFTER_SEED,
     port=8004,
-    endpoint=["http://127.0.0.1:8004/submit"],
-    mailbox=bool(settings.AGENT_MAILBOX_KEY),
+    endpoint=None if is_mailbox else ["http://127.0.0.1:8004/submit"],
+    mailbox=is_mailbox,
     publish_agent_details=True,
 )
 

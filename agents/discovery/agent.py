@@ -20,12 +20,13 @@ logger = setup_logger("discovery_agent")
 settings = get_settings()
 repo = SqliteRepo(settings.DB_PATH)
 
+is_mailbox = bool(settings.AGENT_MAILBOX_KEY)
 discovery_agent = Agent(
     name="deleteme_discovery",
     seed=settings.DISCOVERY_SEED,
     port=8003,
-    endpoint=["http://127.0.0.1:8003/submit"],
-    mailbox=bool(settings.AGENT_MAILBOX_KEY),
+    endpoint=None if is_mailbox else ["http://127.0.0.1:8003/submit"],
+    mailbox=is_mailbox,
     publish_agent_details=True,
 )
 
